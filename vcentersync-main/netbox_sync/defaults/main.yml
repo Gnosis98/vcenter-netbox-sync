@@ -1,8 +1,0 @@
----
-vcenter_hostname: "vcenter.example.de"
-vcenter_username: 'Domäne\Username'
-vcenter_password: "Passwort"
-netbox_url: "https://netbox.example.de"
-netbox_api_token: "API Token"
-netbox_cluster: "Name des Clusters in Netbox"
-netbox_site: "Standort in Netbox"
