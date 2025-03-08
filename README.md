@@ -9,9 +9,9 @@ Dies ist nicht perfekt aber es tut was es soll.
 - Collections:
 community.vmware
 - vCenter:
-Erreichbarer vCenter-Server mit gültigen Zugangsdaten
+Erreichbarer vCenter-Server mit gültigen Zugangsdaten (Read Only
 - NetBox:
-Eine NetBox‑Instanz mit API‑Zugang und gültigem API‑Token
+Eine NetBox‑Instanz mit API‑Zugang und gültigem API‑Token (Read Write)
 Erstelle ansible role
 
 # Variablen
