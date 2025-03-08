@@ -1,0 +1,65 @@
+---
+# 1. Erstelle eine Liste der Schnittstellen für NetBox
+- name: "Erstelle Liste der Schnittstellen für NetBox"
+  set_fact:
+    netbox_interfaces: "{{ netbox_interfaces | default([]) + [ {
+                           'vm_name': item.0.guest_name,
+                           'interface_name': item.1.key,
+                           'mac_address': item.1.value.mac | default('')
+                         } ] }}"
+  loop: "{{ query('subelements', vms.virtual_machines, 'vm_network_dict') }}"
+  loop_control:
+    loop_var: item
+
+# 2. Prüfe, ob die Schnittstelle in NetBox existiert (URL-Parameter kodieren)
+- name: "Prüfe, ob Schnittstelle in NetBox existiert"
+  uri:
+    url: "{{ netbox_url }}/api/virtualization/interfaces/?virtual_machine__name={{ item.vm_name | urlencode }}&name={{ item.interface_name | urlencode }}"
+    method: GET
+    headers:
+      Content-Type: "application/json"
+      Authorization: "Token {{ netbox_api_token }}"
+    return_content: yes
+    status_code: [200, 404]
+    validate_certs: no
+  register: interface_check
+  loop: "{{ netbox_interfaces }}"
+  loop_control:
+    label: "{{ item.vm_name }}-{{ item.interface_name }}"
+
+# 3. Kombiniere die Schnittstellenliste mit den GET-Ergebnissen
+- name: "Kombiniere Schnittstellenliste mit GET-Ergebnissen"
+  set_fact:
+    combined_interfaces: "{{ combined_interfaces | default([]) + [ {
+      'interface': netbox_interfaces[item_index],
+      'check': interface_check.results[item_index]
+    } ] }}"
+  loop: "{{ range(0, (netbox_interfaces | length)) | list }}"
+  loop_control:
+    index_var: item_index
+    label: "{{ netbox_interfaces[item_index].vm_name }}-{{ netbox_interfaces[item_index].interface_name }}"
+
+# 4. Füge Schnittstelle in NetBox hinzu, wenn sie noch nicht existiert und ein MAC-Wert vorhanden ist (sonst wird der Key nicht gesendet)
+- name: "Füge Schnittstelle in NetBox hinzu, wenn nicht vorhanden"
+  uri:
+    url: "{{ netbox_url }}/api/virtualization/interfaces/"
+    method: POST
+    headers:
+      Content-Type: "application/json"
+      Authorization: "Token {{ netbox_api_token }}"
+    body_format: json
+    body: >-
+      {{
+         {
+           "name": item.interface.interface_name,
+           "virtual_machine": {"name": item.interface.vm_name}
+         }
+         | combine(item.interface.mac_address | length > 0 and {"mac_address": item.interface.mac_address} or {})
+      }}
+    status_code: [200, 201]
+    validate_certs: no
+  loop: "{{ combined_interfaces }}"
+  loop_control:
+    label: "{{ item.interface.vm_name }}-{{ item.interface.interface_name }}"
+  when: item.check.json.count == 0
+
