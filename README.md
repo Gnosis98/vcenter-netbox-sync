@@ -41,3 +41,4 @@ Falls VMs in vCenter gelöscht werden, erfolgt auch in NetBox die Entfernung der
 - tags synconisieren
 - Betriebs systemem sync
 - mehrere Cluster aus einem vcenter abrufen können
+- DNS Namen abgleich
