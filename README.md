@@ -28,7 +28,7 @@ Aus den vCenter-Daten werden IP-Adressen extrahiert. Fehlende IPs in NetBox werd
 ## Schnittstellen-Synchronisation:
 Die Netzwerkschnittstellen (Interfaces) der VMs werden erfasst und in NetBox erstellt, sofern sie noch nicht existieren.
 
-##IP‑zu‑Interface Verknüpfung:
+## IP‑zu‑Interface Verknüpfung:
 Die IP-Adressen werden den entsprechenden Schnittstellen in NetBox zugeordnet (gepatcht).
 
 ## Status-Synchronisation:
