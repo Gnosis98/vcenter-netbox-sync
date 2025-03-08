@@ -1,0 +1,119 @@
+---
+# cleanup.yml – Löscht in NetBox VMs (inklusive zugehöriger Interfaces und IPs),
+# die in vCenter nicht mehr vorhanden sind.
+# Die Variable netbox_cluster (z. B. "BID-Server-Cluster") muss in deinen Variablen definiert sein.
+
+# 1. Hole alle VMs aus vCenter (das vCenter-Modul unterstützt keinen Cluster-Parameter)
+- name: "Hole alle VMs aus vCenter"
+  community.vmware.vmware_vm_info:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    show_cluster: true
+  register: vcenter_vms
+
+# 2. Extrahiere die VM-Namen aus vCenter
+- name: "Extrahiere vCenter VM-Namen"
+  set_fact:
+    vcenter_vm_names: "{{ vcenter_vms.virtual_machines | map(attribute='guest_name') | list }}"
+
+- name: "Debug - vCenter VM-Namen"
+  debug:
+    msg: "vCenter VMs: {{ vcenter_vm_names }}"
+
+# 3. Hole alle VMs aus NetBox für den definierten Cluster (netbox_cluster)
+- name: "Hole alle VMs aus NetBox für Cluster {{ netbox_cluster }}"
+  uri:
+    url: "{{ netbox_url }}/api/virtualization/virtual-machines/?limit=0&cluster={{ netbox_cluster | urlencode }}"
+    method: GET
+    headers:
+      Content-Type: "application/json"
+      Authorization: "Token {{ netbox_api_token }}"
+    validate_certs: no
+    return_content: yes
+  register: netbox_vms
+
+- name: "Debug - NetBox VM-Namen"
+  debug:
+    msg: "NetBox VMs: {{ netbox_vms.json.results | map(attribute='name') | list }}"
+
+# 4. Ermittele VMs, die in NetBox vorhanden sind, aber in vCenter fehlen
+- name: "Ermittle VMs, die in NetBox gelöscht werden sollen"
+  set_fact:
+    vms_to_delete: "{{ netbox_vms.json.results | rejectattr('name', 'in', vcenter_vm_names) | list }}"
+
+- name: "Debug - VMs, die gelöscht werden sollen"
+  debug:
+    var: vms_to_delete
+
+# 5. Hole Schnittstellen für jede zu löschende VM in NetBox
+- name: "Hole Schnittstellen für jede zu löschende VM"
+  uri:
+    url: "{{ netbox_url }}/api/virtualization/interfaces/?limit=0&virtual_machine_id={{ item.id }}"
+    method: GET
+    headers:
+      Content-Type: "application/json"
+      Authorization: "Token {{ netbox_api_token }}"
+    validate_certs: no
+    return_content: yes
+  loop: "{{ vms_to_delete }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: vm_interfaces_result
+
+# 6. Setze alle zu löschenden Schnittstellen zusammen (über alle VMs)
+- name: "Setze alle zu löschenden Schnittstellen zusammen"
+  set_fact:
+    interfaces_to_delete: "{{ interfaces_to_delete | default([]) + ( item.json.results | default([]) ) }}"
+  loop: "{{ vm_interfaces_result.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+
+
+# 7. Lösche alle ermittelten Schnittstellen in NetBox
+- name: "Lösche alle ermittelten Schnittstellen in NetBox"
+  uri:
+    url: "{{ netbox_url }}/api/virtualization/interfaces/{{ item.id }}/"
+    method: DELETE
+    headers:
+      Content-Type: "application/json"
+      Authorization: "Token {{ netbox_api_token }}"
+    validate_certs: no
+    status_code: 204
+  loop: "{{ interfaces_to_delete }}"
+  loop_control:
+    label: "{{ item.name }}"
+  ignore_errors: yes 
+
+# 8. Hole alle IP-Adressen aus NetBox mit zugewiesenem Objekt
+- name: "Hole alle IP-Adressen aus NetBox mit zugewiesenem Objekt"
+  uri:
+    url: "{{ netbox_url }}/api/ipam/ip-addresses/?limit=0&has_assigned_object=true"
+    method: GET
+    headers:
+      Content-Type: "application/json"
+      Authorization: "Token {{ netbox_api_token }}"
+    validate_certs: no
+    return_content: yes
+  register: ip_addresses
+
+# 9. Extrahiere die IDs der VMs, die gelöscht werden sollen
+- name: "Extrahiere IDs der VMs, die gelöscht werden sollen"
+  set_fact:
+    vms_to_delete_ids: "{{ vms_to_delete | map(attribute='id') | list }}"
+
+# 12. Lösche die VMs in NetBox, die in vCenter nicht mehr existieren
+- name: "Lösche VMs in NetBox, die nicht mehr in vCenter existieren"
+  uri:
+    url: "{{ netbox_url }}/api/virtualization/virtual-machines/{{ item.id }}/"
+    method: DELETE
+    headers:
+      Content-Type: "application/json"
+      Authorization: "Token {{ netbox_api_token }}"
+    validate_certs: no
+    status_code: 204
+  loop: "{{ vms_to_delete }}"
+  loop_control:
+    label: "{{ item.name }}"
+
