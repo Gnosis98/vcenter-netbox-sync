@@ -4,13 +4,13 @@ In meiner Umgebung dauert dies ca 20 minuten.
 Dies ist nicht perfekt aber es tut was es soll.
 
 # Voraussetzungen
-Ansible: Version 2.9 oder höher
-Python: 3.x
-Collections:
+- Ansible: Version 2.9 oder höher
+- Python: 3.x
+- Collections:
 community.vmware
-vCenter:
+- vCenter:
 Erreichbarer vCenter-Server mit gültigen Zugangsdaten
-NetBox:
+- NetBox:
 Eine NetBox‑Instanz mit API‑Zugang und gültigem API‑Token
 Erstelle ansible role
 
