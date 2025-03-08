@@ -1,3 +1,10 @@
+## Unterstützen
+
+Wenn dir dieses Projekt gefällt und du mich unterstützen möchtest, kannst du gerne über PayPal spenden:
+
+[![PayPal-Spendenbutton](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate?hosted_button_id=STQ4PHG6ETDR2)
+
+
 # vCenter Sync for NetBox
 Diese Ansible‑Rolle synchronisiert deine vCenter‑Umgebung mit NetBox mit den unten genannten Funktionen.
 In meiner Umgebung dauert dies ca 20 minuten.
