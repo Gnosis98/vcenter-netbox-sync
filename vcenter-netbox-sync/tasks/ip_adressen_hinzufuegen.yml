@@ -1,12 +1,12 @@
 ---
 # 1. Hole alle VMs aus vCenter
-- name: "Hole alle VMs aus vCenter"
-  community.vmware.vmware_vm_info:
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    validate_certs: no
-  register: vms
+#- name: "Hole alle VMs aus vCenter"
+#  community.vmware.vmware_vm_info:
+#    hostname: "{{ vcenter_hostname }}"
+#    username: "{{ vcenter_username }}"
+#    password: "{{ vcenter_password }}"
+#    validate_certs: no
+#  register: vms
 
 # 2. Debug - Zeige die geladenen VMs (nur einmal)
 #- name: "Debug - Prüfe, ob VMs aus vCenter geladen wurden"
@@ -23,18 +23,18 @@
 - name: "Ergänze VM Daten mit vm_network_dict"
   set_fact:
     vm_list: "{{ vm_list | default([]) + [ item | combine({'vm_network_dict': (item.vm_network | default({}) | dict2items) }) ] }}"
-  loop: "{{ vms.virtual_machines }}"
+  loop: "{{ vcenter_vms.virtual_machines }}"
 
-- name: "Setze vms.virtual_machines neu"
+- name: "Setze vcenter_vms.virtual_machines neu"
   set_fact:
-    vms:
+    vcenter_vms:
       virtual_machines: "{{ vm_list }}"
 
 # 5. Erstelle eine Zwischensammlung aller Interfaces, die mindestens eine IPv4-Adresse besitzen
 - name: "Extrahiere Interfaces mit IPv4-Adressen"
   set_fact:
     interfaces_with_ips: "{{ interfaces_with_ips | default([]) + [ {'vm_name': item.0.guest_name, 'mac': item.1.key, 'ipv4': item.1.value.ipv4 } ] }}"
-  loop: "{{ query('subelements', vms.virtual_machines, 'vm_network_dict') }}"
+  loop: "{{ query('subelements', vcenter_vms.virtual_machines, 'vm_network_dict') }}"
   loop_control:
     loop_var: item
   when: item.1.value.ipv4 is defined and (item.1.value.ipv4 | length) > 0
