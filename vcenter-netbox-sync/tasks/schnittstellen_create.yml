@@ -7,7 +7,7 @@
                            'interface_name': item.1.key,
                            'mac_address': item.1.value.mac | default('')
                          } ] }}"
-  loop: "{{ query('subelements', vms.virtual_machines, 'vm_network_dict') }}"
+  loop: "{{ query('subelements', vcenter_vms.virtual_machines, 'vm_network_dict') }}"
   loop_control:
     loop_var: item
 
