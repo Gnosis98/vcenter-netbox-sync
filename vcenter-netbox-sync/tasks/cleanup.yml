@@ -4,14 +4,14 @@
 # Die Variable netbox_cluster (z. B. "BID-Server-Cluster") muss in deinen Variablen definiert sein.
 
 # 1. Hole alle VMs aus vCenter (das vCenter-Modul unterstützt keinen Cluster-Parameter)
-- name: "Hole alle VMs aus vCenter"
-  community.vmware.vmware_vm_info:
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    validate_certs: no
-    show_cluster: true
-  register: vcenter_vms
+#- name: "Hole alle VMs aus vCenter"
+#  community.vmware.vmware_vm_info:
+#    hostname: "{{ vcenter_hostname }}"
+#    username: "{{ vcenter_username }}"
+#    password: "{{ vcenter_password }}"
+#    validate_certs: no
+#    show_cluster: true
+#  register: vcenter_vms
 
 # 2. Extrahiere die VM-Namen aus vCenter
 - name: "Extrahiere vCenter VM-Namen"
