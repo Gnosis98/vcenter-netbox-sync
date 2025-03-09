@@ -1,7 +1,7 @@
 ---
 # cleanup.yml – Löscht in NetBox VMs (inklusive zugehöriger Interfaces und IPs),
 # die in vCenter nicht mehr vorhanden sind.
-# Die Variable netbox_cluster (z. B. "BID-Server-Cluster") muss in deinen Variablen definiert sein.
+
 
 # 1. Hole alle VMs aus vCenter (das vCenter-Modul unterstützt keinen Cluster-Parameter)
 #- name: "Hole alle VMs aus vCenter"
